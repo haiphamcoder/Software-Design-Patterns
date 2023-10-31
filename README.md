@@ -247,11 +247,79 @@ public class F16Builder extends AircraftBuilder {
 }
 ```
 
+Để cho ngắn gọn, chúng tôi đã cung cấp bộ khung của các builders và bỏ qua việc triển khai riêng lẻ từng phương thức. Lưu ý **F16Builder** không ghi đè phương thức **buildBathrooms**, vì không có phòng tắm trong buồng lái F-16. Builder của Boeing đã ghi đè phương thức này vì máy bay Boeing-747 có phòng tắm cho hành khách.
+
+Quá trình hoặc thuật toán cần thiết để chế tạo chiếc máy bay trong trường hợp này là thứ tự cụ thể trong đó các bộ phận khác nhau được tạo ra sẽ được một lớp khác gọi là lớp **Director**. The director theo một nghĩa nào đó là chỉ đạo việc chế tạo chiếc máy bay. Sản phẩm cuối cùng vẫn được người xây dựng trả lại.
+
+```java
+public class Director {
+
+    AircraftBuilder aircraftBuilder;
+
+    public Director(AircraftBuilder aircraftBuilder) {
+        this.aircraftBuilder = aircraftBuilder;
+    }
+
+    public void construct(boolean isPassenger) {
+        aircraftBuilder.buildCockpit();
+        aircraftBuilder.buildEngine();
+        aircraftBuilder.buildWings();
+
+        if (isPassenger)
+            aircraftBuilder.buildBathrooms();
+    }
+}
+```
+
+Lưu ý cách chúng tôi có thể chuyển giao builder theo lựa chọn của mình và thay đổi aircraft product (representation) thành F-16 hoặc Boeing-747. Trong trường hợp của chúng tôi, các nhà xây dựng trả về cùng một siêu kiểu, tuy nhiên điều đó có thể không xảy ra nếu các nhà xây dựng trả lại các sản phẩm không giống nhau lắm.
+
+Client sẽ sử dụng mẫu như vậy:
+
+```java
+public class Client {
+
+    public void main() {
+
+        F16Builder f16Builder = new F16Builder();
+        Director director = new Director(f16Builder);
+        director.construct(false);
+
+        IAircraft f16 = f16Builder.getResult();
+    }
+}
+```
+
+Giao diện **AircraftBuilder** ẩn cách một chiếc máy bay nhất định được chế tạo. Client không biết về các lớp **F16Engine**, **F16Cockpit** và các hạng tương tự dành cho **Boeing-747**.
+
 #### Skipping the Director
+
+Bạn có thể thấy **Builder Pattern** đang được sử dụng mà không có **director**. Client có thể trực tiếp khởi tạo builder và gọi các phương thức cần thiết để có được sản phẩm cho chính nó. Đây là một liều thuốc giải độc phổ biến cho các nhà xây dựng kính thiên văn (telescoping constructors). Hãy tưởng tượng một lớp có quá nhiều thuộc tính nhưng một số thuộc tính được đặt tùy chọn. Trong trường hợp như vậy, builder có thể được gọi để chỉ đặt các thuộc tính bắt buộc và tạo sản phẩm
 
 #### Other Examples
 
+- API Java cho thấy lớp **StringBuilder** không thực sự tuân thủ cách đọc nghiêm ngặt của Gof builder pattern, nhưng vẫn có thể được coi là một ví dụ về nó. Sử dụng StringBuilder, chúng ta có thể tạo một chuỗi liên tiếp bằng cách sử dụng phương thức append().
+- Một ví dụ giả định khác có thể là tạo tài liệu thuộc loại pdf hoặc html. Hãy xem xét đoạn trích dưới đây:
+
+```java
+public IDocument construct(DocumentBuilder documentBuilder) {
+
+    documentBuilder.addTitle("Why use design patterns");
+    documentBuilder.addBody("blah blah blah... more blah blah blah");
+    documentBuilder.addAuthor("C. H. Afzal");
+    documentBuilder.addConclusion("Happy Coding!");
+        
+    // Return the document and depending on the concrete
+    // implementation of the DocumentBuilder, we could return
+    // either a pdf or html document.
+    return documentBuilder.buildDocument();  
+}
+```
+
+Phương thức trên có thể xuất hiện trong mã director hoặc mã client và các loại tài liệu khác nhau có thể được xây dựng bằng cách thay đổi loại cụ thể của **DocumentBuilder** được truyền vào phương thức. Chúng ta có thể có một **HtmlDocumentBuilder** và một **PdfDocumentBuilder** bắt nguồn từ lớp trừu tượng **DocumentBuilder**.
+
 #### Caveats
+
+Builder Pattern có thể trông giống với Abstract Factory Pattern, nhưng có một điểm khác biệt là builder pattern tạo đối tượng theo từng bước trong khi abstract factory pattern trả về đối tượng trong một lần.
 
 ### Singleton Pattern
 
