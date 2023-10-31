@@ -323,6 +323,139 @@ Builder Pattern có thể trông giống với Abstract Factory Pattern, nhưng 
 
 ### Singleton Pattern
 
+#### What is it?
+
+Mẫu Singleton như tên gợi ý được sử dụng để tạo một và duy nhất một phiên bản của một lớp. Có một số ví dụ trong đó chỉ tồn tại một phiên bản duy nhất của một lớp và ràng buộc được thực thi. Bộ nhớ đệm (caches), nhóm luồng (thread pools), sổ đăng ký (registries) là những ví dụ về các đối tượng chỉ nên có một phiên bản duy nhất.
+
+Việc tạo mới một đối tượng của một lớp là chuyện bình thường nhưng làm cách nào để đảm bảo rằng chỉ có một đối tượng được tạo? Câu trả lời là đặt hàm tạo ở chế độ private. Bằng cách đó, chỉ các thành viên của lớp mới có thể truy cập vào hàm tạo riêng và không ai khác có thể truy cập được.
+
+Về mặt hình thức, mẫu Singleton được định nghĩa là **đảm bảo rằng chỉ tồn tại một phiên bản duy nhất của một lớp và tồn tại một điểm truy cập toàn cầu vào nó**.
+
+#### Class Diagram
+
+Sơ đồ lớp chỉ bao gồm một thực thể duy nhất:
+
+![Singleton](image-2.png)
+
+#### Example
+
+Giả sử chúng tôi muốn lập mô hình chiếc máy bay chính thức của Tổng thống Mỹ có tên là "Airforce One" trong phần mềm của chúng tôi. Chỉ có thể có một phiên bản của Airforce One và một lớp singleton là cách thể hiện phù hợp nhất.
+
+Dưới đây là mã cho lớp singleton của chúng tôi
+
+```java
+public class AirforceOne {
+
+    // The sole instance of the class
+    private static AirforceOne onlyInstance;
+
+    // Make the constructor private so its only accessible to
+    // members of the class.
+    private AirforceOne() {
+    }
+
+    public void fly() {
+        System.out.println("Airforce one is flying...");
+    }
+
+    // Create a static method for object creation
+    public static AirforceOne getInstance() {
+
+        // Only instantiate the object when needed.
+        if (onlyInstance == null) {
+            onlyInstance = new AirforceOne();
+        }
+
+        return onlyInstance;
+    }
+}
+
+public class Client {
+
+    public void main() {
+        AirforceOne airforceOne = AirforceOne.getInstance();
+        airforceOne.fly();
+    }
+}
+```
+
+#### Multithreading and Singleton
+
+Đoạn mã trên sẽ hoạt động rất tốt miễn là ứng dụng chỉ chạy một luồng. Ngay khi nhiều luồng bắt đầu sử dụng lớp, có khả năng nhiều đối tượng sẽ được tạo. Đây là một kịch bản ví dụ:
+
+- Luồng A gọi phương thức getInstance và tìm thấy onlyInstance là null nhưng trước khi nó thực sự khởi tạo đối tượng, nó sẽ tắt ngữ cảnh (context switched out).
+- Bây giờ luồng B xuất hiện và gọi getInstancephương thức và tiếp tục khởi tạo và trả về đối tượng AirforceOne .
+- Khi luồng A được lên lịch lại, đó là lúc trò nghịch ngợm bắt đầu. Luồng đã vượt qua kiểm tra điều kiện if null và sẽ tiến hành tạo một đối tượng khác của AirforceOne và gán nó cho onlyInstance. Bây giờ có hai đối tượng AirforceOne khác nhau, một cái được tạo bởi luồng A và một cái được tạo bởi luồng B.
+
+Có hai cách nhỏ để khắc phục tình trạng này:
+
+- Một là thêm **synchronized** vào đầu phương thức getInstance().
+
+```java
+synchronized public static AirforceOne getInstance()
+```
+
+- Cách khác là thực hiện khởi tạo tĩnh phiên bản, được đảm bảo an toàn cho luồng.
+
+```java
+// The sole instance of the class
+private static AirforceOne onlyInstance = new AirforceOne();
+```
+
+Vấn đề với các phương pháp trên là việc đồng bộ hóa tốn kém và việc khởi tạo tĩnh sẽ tạo ra đối tượng ngay cả khi nó không được sử dụng trong một lần chạy ứng dụng cụ thể. Nếu việc tạo đối tượng tốn kém thì việc thiết lập tĩnh có thể khiến chúng ta mất hiệu suất.
+
+#### Double-Checked Locking
+
+Sự phát triển tiếp theo của singleton pattern sẽ chỉ đồng bộ hóa khi đối tượng được tạo lần đầu tiên và nếu nó đã được tạo thì chúng tôi không cố gắng đồng bộ hóa các luồng truy cập. Mẫu này có tên gọi là "double-checked locking".
+
+```java
+public class AirforceOneWithDoubleCheckedLocking {
+
+    // The sole instance of the class. Note its marked volatile
+    private volatile static AirforceOneWithDoubleCheckedLocking onlyInstance;
+
+    // Make the constructor private so its only accessible to
+    // members of the class.
+    private AirforceOneWithDoubleCheckedLocking() {
+    }
+
+    public void fly() {
+        System.out.println("Airforce one is flying...");
+    }
+
+    // Create a static method for object creation
+    synchronized public static AirforceOneWithDoubleCheckedLocking getInstance() {
+
+        // Only instantiate the object when needed.
+        if (onlyInstance == null) {
+            // Note how we are synchronizing on the class object
+            synchronized (AirforceOneWithDoubleCheckedLocking.class) {
+                if (onlyInstance == null) {
+                    onlyInstance = new AirforceOneWithDoubleCheckedLocking();
+                }
+            }
+        }
+
+        return onlyInstance;
+    }
+}
+```
+
+Giải pháp trên đánh dấu cá thể đơn lẻ không ổn định tuy nhiên JVM volatile triển khai cho Java phiên bản 1.4 sẽ không hoạt động chính xác đối với khóa được kiểm tra kép và bạn sẽ cần sử dụng một cách khác để tạo các singleton của mình.
+
+Khóa kiểm tra kép hiện được coi là một phản mẫu và tiện ích của nó phần lớn đã không còn do thời gian khởi động JVM đã tăng lên trong những năm qua.
+
+#### Other Examples
+
+Trong API Java, chúng tôi có các singleton sau:
+
+- java.lang.Runtime
+- java.awt.Desktop
+
+#### Caveats
+
+Có thể phân lớp một lớp đơn bằng cách đặt hàm tạo được bảo vệ thay vì riêng tư. Nó có thể phù hợp trong một số trường hợp. Một cách tiếp cận được thực hiện trong các tình huống này là tạo một sổ đăng ký gồm các lớp con của các lớp con và phương thức getInstance có thể lấy tham số hoặc sử dụng biến môi trường để trả về singleton mong muốn. Registry duy trì ánh xạ tên chuỗi tới các đối tượng đơn lẻ.
+
 ### Prototype Pattern
 
 ### Factory Method Pattern
