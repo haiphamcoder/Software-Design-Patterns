@@ -134,6 +134,125 @@ Các mẫu thiết kế hành vi chỉ ra sự tương tác giữa các lớp v�
 
 ### Builder Pattern
 
+#### What is it?
+
+Đúng như tên gọi, mẫu xây dựng được sử dụng để xây dựng các đối tượng. Đôi khi, các đối tượng chúng ta tạo ra có thể phức tạp, được tạo thành từ nhiều đối tượng phụ hoặc yêu cầu một quy trình xây dựng phức tạp. Việc tạo các kiểu phức tạp có thể được đơn giản hóa bằng cách sử dụng mẫu xây dựng. Đối tượng composite hoặc aggregate là những gì mà người xây dựng thường xây dựng.
+
+Về mặt hình thức, một mẫu trình xây dựng đóng gói hoặc ẩn quá trình xây dựng một đối tượng phức tạp và tách biệt cách biểu diễn đối tượng và cấu trúc của nó. Sự phân tách cho phép chúng ta xây dựng các biểu diễn khác nhau bằng cách sử dụng cùng một quy trình xây dựng. Trong ngôn ngữ Java, các cách biểu diễn khác nhau ngụ ý việc tạo các đối tượng thuộc các lớp khác nhau có thể chia sẻ cùng một quy trình xây dựng.
+
+#### Class Diagram
+
+Sơ đồ lớp dưới đây bao gồm các thực thể sau:
+
+- Builder
+- Concrete Builder
+- Director
+- Product
+
+![Class Diagram](image-1.png)
+
+#### Example
+
+Tiếp tục với ví dụ của chúng ta về máy bay, giả sử việc chế tạo một chiếc máy bay bao gồm ba bước theo thứ tự:
+
+1. chế tạo buồng lái
+2. sau đó là động cơ
+3. và cuối cùng là đôi cánh
+
+Trong thế giới giả định của chúng ta, mọi máy bay đều yêu cầu ít nhất ba bước trên. Tuy nhiên, máy bay chở khách có thể có thêm một bước là làm phòng tắm trên máy bay. Các bước thể hiện quá trình xây dựng (**construction**) theo định nghĩa chính thức của chúng tôi. Sản phẩm (**Product**) này là một chiếc máy bay nhưng có thể có nhiều hình dáng (**representations**) khác nhau như F-16 hoặc Boeing-747. Sử dụng cùng một quy trình xây dựng, chúng ta sẽ có thể sản xuất cả F-16 và Boeing.
+
+Bây giờ chúng ta hãy xem một số mã. Đầu tiên chúng ta sẽ bắt đầu với lớp trừu tượng **AircraftBuilder**. Trình xây dựng chứa một phương thức cho từng thành phần có thể là một phần của sản phẩm cuối cùng. Các phương thức này được các **concrete builder** ghi đè có chọn lọc tùy thuộc vào việc liệu các nhà xây dựng (**builders**) có đưa phần đó vào biến thể sản phẩm cuối cùng mà họ chịu trách nhiệm xây dựng hay không.
+
+```java
+public abstract class AircraftBuilder {
+
+    public void buildEngine() {
+
+    }
+
+    public void buildWings() {
+
+    }
+
+    public void buildCockpit() {
+
+    }
+
+    public void buildBathrooms() {
+
+    }
+
+    abstract public IAircraft getResult();
+}
+```
+
+Bây giờ chúng tôi sẽ triển khai hai concrete builders, một cho F-16 và một cho Boeing-747.
+
+```java
+public class Boeing747Builder extends AircraftBuilder {
+
+    Boeing747 boeing747;
+
+    @Override
+    public void buildCockpit() {
+
+    }
+
+    @Override
+    public void buildEngine() {
+
+    }
+
+    @Override
+    public void buildBathrooms() {
+        
+    }
+
+    @Override
+    public void buildWings() {
+
+    }
+
+    public IAircraft getResult() {
+        return boeing747;
+    }
+}
+
+public class F16Builder extends AircraftBuilder {
+
+    F16 f16;
+
+    @Override
+    public void buildEngine() {
+        // get F-16 an engine
+        // f16.engine = new F16Engine();
+    }
+
+    @Override
+    public void buildWings() {
+        // get F-16 wings
+        // f16.wings = new F16Wings();
+    }
+
+    @Override
+    public void buildCockpit() {
+        f16 = new F16();
+        // get F-16 a cockpit
+        // f16.cockpit = new F16Cockpit();
+    }
+
+    public IAircraft getResult() {
+        return f16;
+    }
+}
+```
+
+#### Skipping the Director
+
+#### Other Examples
+
+#### Caveats
+
 ### Singleton Pattern
 
 ### Prototype Pattern
